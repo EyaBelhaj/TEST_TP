@@ -1,13 +1,15 @@
-version: "3.3"
 services:
   angular-app:
-    image: nouran10/angular
+    build: ./angular-app
     ports:
-      - "0.0.0.0:4200:80"      
+      - "4200:80"      
   spring-boot-app:
-    image: nouran10/spring
+    build:
+      context: ./springboot/app
+      secrets:
+        - maven-ca
     ports:
-      - "0.0.0.0:8081:8081"
+      - "8081:8081"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/demo
       - SPRING_DATASOURCE_USERNAME=root
@@ -19,17 +21,28 @@ services:
       - SPRING_MVC_CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE
       - SPRING_MVC_CORS_ALLOWED_HEADERS=*
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
   mysql:
     image: mysql:5.7
     restart: always
     environment:
       MYSQL_DATABASE: 'demo'
-      MYSQL_ROOT_USERNAME: 'root'
       MYSQL_ROOT_PASSWORD: 'root'
     ports:
-      - '0.0.0.0:3306:3306'
+      - '3306:3306'
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     volumes:
       - demo:/var/lib/mysql
+
 volumes:
   demo:
+
+secrets:
+  maven-ca:
+    file: ./springboot/app/.build-certs/maven-ca.cer

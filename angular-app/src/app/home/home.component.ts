@@ -22,8 +22,9 @@ export class HomeComponent implements OnInit{
           this.usersList.push(obj)
         }))
       },
-      error=>{
-        alert(error);
+      error => {
+        const detail = error.error?.message ?? error.message ?? 'Unknown server error';
+        alert(`Could not load users: ${detail}`);
       })
   }
 
